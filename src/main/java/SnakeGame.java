@@ -12,14 +12,8 @@ import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryStack;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.stackMallocFloat;
@@ -29,7 +23,37 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class SnakeGame {
     
-    private static final Logger logger = LoggerFactory.getLogger(SnakeGame.class);
+    private static final Logger.LogLevel LOG_LEVEL = Logger.LogLevel.DEBUG;
+    private final Logger logger = new Logger(LOG_LEVEL);
+    
+    private static class Logger {
+        
+        private enum LogLevel {
+            DEBUG, TRACE, ERROR
+        }
+        
+        private final LogLevel logLevel;
+        
+        public Logger(LogLevel logLevel) {
+            this.logLevel = logLevel;
+        }
+        
+        public void error(String string) {
+            System.err.println(string);
+        }
+        
+        public void trace(String string) {
+            if (logLevel == LogLevel.TRACE || logLevel == LogLevel.DEBUG) {
+                System.out.printf("[TRACE] %s\n", string);
+            }
+        }
+    
+        public void debug(String string) {
+            if (logLevel == LogLevel.DEBUG) {
+                System.out.println(string);
+            }
+        }
+    }
     
     public static CharSequence[] vertexShaderSource = {
             "#version 330 core\n",
@@ -68,7 +92,7 @@ public class SnakeGame {
     private static final Vector3f foodColor = new Vector3f (1.0f, 0.9f, 0.0f);  // Yellow
     
     private static class Snake {
-        public static enum Direction { UP, DOWN, LEFT, RIGHT }
+        public enum Direction { UP, DOWN, LEFT, RIGHT }
         public Direction direction = Direction.UP;
         public Vector2f head = new Vector2f();
         public List<Vector2f> tail = new ArrayList<>();
@@ -80,15 +104,16 @@ public class SnakeGame {
     private final Random random = new Random();
     
     private long window;
-    private final String title = "Snake Game";
+    private final String title = "WormsLWJGL";
     private int width = 800;
     private int height = 600;
     private int fbWidth = width;
     private int fbHeight = height;
     private final boolean[] keyPressed = new boolean[GLFW_KEY_LAST + 1];
     
-    private final int gridCols = width / 20;
-    private final int gridRows = height / 20;
+    private final int gridCols = width / 5;
+    private final int gridRows = height / 5;
+    private final int snakeVisionDistance = 20;
     
     private final Snake snake = new Snake();
     {
@@ -140,13 +165,15 @@ public class SnakeGame {
         long monitor = glfwGetPrimaryMonitor();
         GLFWVidMode vidmode = glfwGetVideoMode(monitor);
         logger.debug(
-                "Current video mode: {}x{} {}:{}:{} @ {}Hz",
-                vidmode.width(),
-                vidmode.height(),
-                vidmode.redBits(),
-                vidmode.greenBits(),
-                vidmode.blueBits(),
-                vidmode.refreshRate()
+                String.format(
+                        "Current video mode: %dx%d %d:%d:%d @ %dHz",
+                        vidmode.width(),
+                        vidmode.height(),
+                        vidmode.redBits(),
+                        vidmode.greenBits(),
+                        vidmode.blueBits(),
+                        vidmode.refreshRate()
+                )
         );
         
         // Setup window creation hints
@@ -160,7 +187,7 @@ public class SnakeGame {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         
         // Create the window
-        logger.debug("Creating window: \"{}\" ({}x{})", this.title, this.width, this.height);
+        logger.debug(String.format("Creating window: \"%S\" (%dx%d)", this.title, this.width, this.height));
         this.window = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
         if (NULL == this.window) {
             logger.error("Failed to create GLFW window");
@@ -177,7 +204,7 @@ public class SnakeGame {
             }
             final boolean pressed = GLFW_PRESS == action || GLFW_REPEAT == action;
             if (GLFW_PRESS == action)
-                logger.trace("Key: #{} pressed", key);
+                logger.trace(String.format("Key: #%d pressed", key));
             this.keyPressed[key] = pressed;
         });
         
@@ -186,7 +213,7 @@ public class SnakeGame {
             if (window == SnakeGame.this.window && width > 0 && height > 0 && (width != SnakeGame.this.width || height != SnakeGame.this.height)) {
                 SnakeGame.this.width = width;
                 SnakeGame.this.height = height;
-                logger.trace("Window resized: {}x{}", width, height);
+                logger.trace(String.format("Window resized: %dx%d", width, height));
             }
         });
         
@@ -195,7 +222,7 @@ public class SnakeGame {
             if (window == SnakeGame.this.window && width > 0 && height > 0 && (width != SnakeGame.this.fbWidth || height != SnakeGame.this.fbHeight)) {
                 SnakeGame.this.fbWidth = width;
                 SnakeGame.this.fbHeight = height;
-                logger.trace("Framebuffer resized: {}x{}", width, height);
+                logger.trace(String.format("Framebuffer resized: %dx%d", width, height));
             }
         });
         
@@ -214,7 +241,7 @@ public class SnakeGame {
             if (this.fbWidth != pWidth.get(0) || this.fbHeight != pHeight.get(0)) {
                 this.fbWidth = pWidth.get(0);
                 this.fbHeight = pHeight.get(0);
-                logger.trace("Framebuffer size: {}x{}", this.fbWidth, this.fbHeight);
+                logger.trace(String.format("Framebuffer size: %dx%d", this.fbWidth, this.fbWidth));
             }
         }
         
@@ -370,7 +397,7 @@ public class SnakeGame {
         
         // Collision detection
         if ((int)snake.head.x == (int)food.x && (int)snake.head.y == (int)food.y) {
-            logger.trace("Snake: Collision with food! Snake{}, Food{}", snake.head, food);
+            logger.trace("Snake: Collision with food!");
             placeFood();  // Move food
             snake.growing = true;  // Set snake to growing
             snake.velocity += 0.02f;
@@ -448,7 +475,7 @@ public class SnakeGame {
         
         // Check if snake2 collides with snake tail
         for (final Vector2f tail : snake.tail) {
-            if ((int)snake2.head.x == (int)tail.x && (int)snake2.head.y == (int)tail.y) {
+            if ((int) snake2.head.x == (int) tail.x && (int) snake2.head.y == (int) tail.y) {
                 logger.trace("Snake2: Dead!");
                 snake2.alive = false;
             }
@@ -462,13 +489,33 @@ public class SnakeGame {
     
     private void drawBlock(final Vector2f position, final Vector3f color) {
         // Block size and position
-        final int blockWidth = this.fbWidth / this.gridCols;
-        final int blockHeight = this.fbHeight / this.gridRows;
+        final int blockWidth = this.fbWidth / (this.gridCols / 2);
+        final int blockHeight = this.fbHeight / (this.gridRows / 2);
         // Block position - top left is (0,0)
         final float blockX = ((float)Math.floor(position.x) * blockWidth);
         final float blockY = ((float)Math.floor(position.y) * blockHeight);
+        
+        // Dont draw the block if it is invisible for the snake
+        if (Math.abs((int)snake.head.x - (int)position.x) >= snakeVisionDistance
+                || Math.abs((int)snake.head.y - (int)position.y) >= snakeVisionDistance) {
+            return;
+        }
+        
+        // Use relative position for the snake to be always in the center of the screen
+        float relativeCenterX = (snake.head.x * blockWidth) - snakeVisionDistance;
+        float relativeCenterY = (snake.head.y * blockHeight) - snakeVisionDistance;
+        
+        if (relativeCenterX < 0) {
+            relativeCenterX = 0;
+        }
+        if (relativeCenterY < 0) {
+            relativeCenterY = 0;
+        }
+        
+        logger.debug(String.format("Snake: relativeCenterX: %f, relativeCenterY: %f", relativeCenterX, relativeCenterY));
+        
         // Render block
-        this.modelMatrix.translation(blockX, blockY, 0.0f);
+        this.modelMatrix.translation(blockX - relativeCenterX + (float)fbWidth / 2, blockY - relativeCenterY + (float)fbHeight / 2, 0.0f);
         this.modelMatrix.scale(blockWidth, blockHeight, 1.0f);
         GL20.glUniformMatrix4fv(this.shaderModelUniform, false, this.modelMatrix.get(matrixBuffer));
         GL20.glUniformMatrix4fv(this.shaderProjUniform, false, this.projectionMatrix.get(matrixBuffer));
