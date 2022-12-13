@@ -1,15 +1,21 @@
-package gamelogic.entities.worm;
+package gamelogic.entities.worm.impl;
 
+import application.Application;
 import enums.Direction;
+import gamelogic.controllers.WormController;
+import gamelogic.controllers.impl.WormControllerImpl;
+import gamelogic.entities.worm.Worm;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class WormDefaultImpl implements Worm {
+public class WormImpl implements Worm {
     
     private int id = 0;
     private Direction direction = Direction.UP;
+    private WormController wormController =
+            new WormControllerImpl(this, Application.GRID_ROWS, Application.GRID_COLUMNS);
     private int visionDistance = 20;
     private Vector2f head = new Vector2f();
     private List<Vector2f> tail = new ArrayList<>();
@@ -25,6 +31,16 @@ public class WormDefaultImpl implements Worm {
     @Override
     public void setId(int id) {
         this.id = id;
+    }
+    
+    @Override
+    public WormController getController() {
+        return wormController;
+    }
+    
+    @Override
+    public void setController(WormController controller) {
+        this.wormController = controller;
     }
     
     @Override

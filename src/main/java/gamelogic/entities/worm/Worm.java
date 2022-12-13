@@ -1,6 +1,7 @@
 package gamelogic.entities.worm;
 
 import enums.Direction;
+import gamelogic.controllers.WormController;
 import org.joml.Vector2f;
 
 import java.util.List;
@@ -9,6 +10,8 @@ public interface Worm {
     
     int getId();
     void setId(int id);
+    WormController getController();
+    void setController(WormController controller);
     Direction getDirection();
     void setDirection(Direction direction);
     int getVisionDistance();

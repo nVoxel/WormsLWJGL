@@ -1,15 +1,16 @@
-package events.keypress;
+package events.keypress.impl;
 
 import enums.Direction;
+import events.keypress.KeyPressEvent;
 import gamelogic.controllers.WormController;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class KeyPressEventDefaultImpl implements KeyPressEvent {
+public class KeyPressEventImpl implements KeyPressEvent {
     
     private final WormController wormController;
     
-    public KeyPressEventDefaultImpl(WormController wormController) {
+    public KeyPressEventImpl(WormController wormController) {
         this.wormController = wormController;
     }
     
