@@ -11,7 +11,6 @@ import gamelogic.gamerenderer.impl.GameRendererImpl;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
@@ -22,6 +21,7 @@ import utils.Logger;
 import window.Window;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -51,21 +51,26 @@ public class Application {
     
     private long window;
     
-    private final Worm worm = new WormImpl();
-    {
-        worm.setId(1);
-        worm.getHead().x = (float)(GRID_COLUMNS / 2);
-        worm.getHead().y = (float)(GRID_ROWS / 2);
+    private final List<Worm> worms = new ArrayList<>(); {
+        final Worm worm = new WormImpl();
+        {
+            worm.setId(1);
+            worm.getHead().x = (float)(GRID_COLUMNS / 2);
+            worm.getHead().y = (float)(GRID_ROWS / 2);
+        }
+        
+        final Worm worm2 = new WormImpl();
+        {
+            worm.setId(2);
+            worm2.getHead().x = (float)(GRID_COLUMNS / 2);
+            worm2.getHead().y = (float)(GRID_ROWS / 2 - 2);
+        }
+        
+        worms.add(worm);
+        worms.add(worm2);
     }
     
-    private final Worm worm2 = new WormImpl();
-    {
-        worm.setId(2);
-        worm2.getHead().x = (float)(GRID_COLUMNS / 2);
-        worm2.getHead().y = (float)(GRID_ROWS / 2 - 2);
-    }
-    
-    private final Worm playerWorm = worm;
+    private final Worm playerWorm = worms.get(0);
     private final KeyPressEvent keyPressEvent = new KeyPressEventImpl(playerWorm.getController());
     
     private int blockVertexArray, blockVertexArrayBuffer, blockElementArrayBuffer;
@@ -76,19 +81,6 @@ public class Application {
     private final Mesh mesh = new Mesh();
     private GameController gameController;
     private GameRenderer gameRenderer;
-    
-    private void render() {
-        GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        GL20.glUseProgram(shaderProgram);
-        GL30.glBindVertexArray(blockVertexArray);
-        gameController.drawWorm(worm);
-        gameController.drawWorm(worm2);
-        gameController.drawBorders();
-        gameController.drawFood();
-        GL30.glBindVertexArray(0);
-        GL20.glUseProgram(0);
-    }
     
     public void run() {
         try {
@@ -125,17 +117,13 @@ public class Application {
         shaderProgram = shader.createShaderProgram();
         renderer = shader.createRenderer();
         gameController = new GameControllerImpl(renderer, playerWorm);
-        gameRenderer = new GameRendererImpl(shaderProgram, blockVertexArray, gameController, new ArrayList<>() {
-            {
-                add(worm);
-                add(worm2);
-            }
-        });
         
         int[] mArr = mesh.createBlockMesh(BLOCK_VERTICES, BLOCK_INDICES);
         blockVertexArray = mArr[0];
         blockVertexArrayBuffer = mArr[1];
         blockElementArrayBuffer = mArr[2];
+    
+        gameRenderer = new GameRendererImpl(shaderProgram, blockVertexArray, gameController, worms);
     }
     
     private void loop() {
@@ -160,15 +148,16 @@ public class Application {
             
             // Update game
             while (accumulatedDelta >= secondsPerFrame) {
-                gameController.update(worm);
-                gameController.update(worm2);
-                gameController.checkWormsCollision(worm, worm2);
+                for (Worm worm : worms) {
+                    gameController.update(worm);
+                }
+                
+                gameController.checkWormsCollision(worms.get(0), worms.get(1)); // TODO remove hardcoded worms
                 accumulatedDelta -= secondsPerFrame;
             }
             
             // Render game
-            // gameRenderer.render(); // TODO: Error
-            render();
+            gameRenderer.render();
             
             // Update fps
             frameCount++;

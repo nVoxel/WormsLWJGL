@@ -23,7 +23,6 @@ public class GameRendererImpl implements GameRenderer {
         this.worms = worms;
     }
     
-    // A fatal error has been detected by the Java Runtime Environment ???
     @Override
     public void render() {
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -34,6 +33,7 @@ public class GameRendererImpl implements GameRenderer {
             gameController.drawWorm(worm);
         }
         gameController.drawFood();
+        gameController.drawBorders();
         GL30.glBindVertexArray(0);
         GL20.glUseProgram(0);
     }

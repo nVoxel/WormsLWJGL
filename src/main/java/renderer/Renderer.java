@@ -13,7 +13,7 @@ import java.nio.FloatBuffer;
 
 public class Renderer {
     
-    private final Logger logger = Logger.getInstance();
+    // private final Logger logger = Logger.getInstance();
     private final int fbWidth, fbHeight;
     private final int gridCols, gridRows;
     private final Matrix4f modelMatrix, projectionMatrix;
@@ -65,7 +65,8 @@ public class Renderer {
             relativeCenterY = 0;
         }
         
-        logger.debug(String.format("Worm: relativeCenterX: %f, relativeCenterY: %f", relativeCenterX, relativeCenterY));
+        // Spam!!!
+        // logger.debug(String.format("Worm: relativeCenterX: %f, relativeCenterY: %f", relativeCenterX, relativeCenterY));
         
         // Render block
         this.modelMatrix.translation(blockX - relativeCenterX + (float)fbWidth / 2, blockY - relativeCenterY + (float)fbHeight / 2, 0.0f);
