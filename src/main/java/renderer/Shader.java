@@ -1,5 +1,6 @@
 package renderer;
 
+import application.Application;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -35,11 +36,12 @@ public class Shader {
     private Matrix4f projectionMatrix;
     private int shaderProjUniform, shaderModelUniform, shaderColorUniform;
     
-    public Shader(int framebufferWidth, int framebufferHeight, int gridColumns, int gridRows) {
+    public Shader(int framebufferWidth, int framebufferHeight, int gridColumns, int gridRows, Matrix4f projectionMatrix) {
         this.framebufferWidth = framebufferWidth;
         this.framebufferHeight = framebufferHeight;
         this.gridColumns = gridColumns;
         this.gridRows = gridRows;
+        this.projectionMatrix = projectionMatrix;
     }
     
     private int createShader(int type, CharSequence... source) {
@@ -68,7 +70,10 @@ public class Shader {
         GL20.glDeleteShader(fragmentShader);
         GL20.glUseProgram(shaderProgram);
         
-        projectionMatrix = new Matrix4f().ortho2D(0, framebufferWidth, framebufferHeight,0);
+        //projectionMatrix = new Matrix4f().ortho2D(0, framebufferWidth, framebufferHeight,0);
+        
+        setProjectionMatrix(framebufferWidth, framebufferHeight);
+        
         shaderProjUniform = GL20.glGetUniformLocation(shaderProgram, "u_Projection");
         shaderModelUniform = GL20.glGetUniformLocation(shaderProgram, "u_Model");
         shaderColorUniform = GL20.glGetUniformLocation(shaderProgram, "u_Color");
@@ -81,9 +86,14 @@ public class Shader {
     public Renderer createRenderer() {
         return new Renderer(
                 framebufferWidth, framebufferHeight,
-                gridColumns, gridRows,
-                new Matrix4f(), projectionMatrix, BufferUtils.createFloatBuffer(16),
+                new Matrix4f(), BufferUtils.createFloatBuffer(16),
                 shaderProjUniform, shaderModelUniform, shaderColorUniform
         );
+    }
+    
+    public static void setProjectionMatrix(int framebufferWidth, int framebufferHeight) {
+        int halfMargin = (Application.WINDOW_WIDTH - Application.FRAMEBUFFER_WIDTH) / 2;
+        
+        Application.projectionMatrix = new Matrix4f().ortho2D(halfMargin, framebufferWidth - halfMargin * 2, framebufferHeight,0);
     }
 }

@@ -8,6 +8,7 @@ import gamelogic.entities.worm.Worm;
 import gamelogic.entities.worm.impl.WormImpl;
 import gamelogic.gamerenderer.GameRenderer;
 import gamelogic.gamerenderer.impl.GameRendererImpl;
+import org.joml.Matrix4f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -39,13 +40,13 @@ public class Application {
     };
     
     public static final String WINDOW_TITLE = "WormsLWJGL";
-    public static final int WINDOW_WIDTH = 800;
-    public static final int WINDOW_HEIGHT = 600;
-    public static final int FRAMEBUFFER_WIDTH = WINDOW_WIDTH;
-    public static final int FRAMEBUFFER_HEIGHT = WINDOW_HEIGHT;
+    public static int WINDOW_WIDTH = 1280;
+    public static int WINDOW_HEIGHT = 720;
+    public static int FRAMEBUFFER_WIDTH = WINDOW_WIDTH;
+    public static int FRAMEBUFFER_HEIGHT = WINDOW_HEIGHT;
     
-    public static final int GRID_COLUMNS = WINDOW_WIDTH / 5;
-    public static final int GRID_ROWS = WINDOW_HEIGHT / 5;
+    public static int GRID_COLUMNS = WINDOW_WIDTH / 5;
+    public static int GRID_ROWS = WINDOW_HEIGHT / 5;
     
     private final Logger logger = Logger.getInstance();
     
@@ -55,8 +56,10 @@ public class Application {
         final Worm worm = new WormImpl();
         {
             worm.setId(1);
-            worm.getHead().x = (float)(GRID_COLUMNS / 2);
-            worm.getHead().y = (float)(GRID_ROWS / 2);
+            //worm.getHead().x = (float)(GRID_COLUMNS / 2);
+            //worm.getHead().y = (float)(GRID_ROWS / 2);
+            worm.getHead().x = 20;
+            worm.getHead().y = 20;
         }
         
         final Worm worm2 = new WormImpl();
@@ -77,7 +80,8 @@ public class Application {
     private int shaderProgram;
     
     private Renderer renderer;
-    private final Shader shader = new Shader(FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, GRID_COLUMNS, GRID_ROWS);
+    public static Matrix4f projectionMatrix;
+    private final Shader shader = new Shader(FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, GRID_COLUMNS, GRID_ROWS, projectionMatrix);
     private final Mesh mesh = new Mesh();
     private GameController gameController;
     private GameRenderer gameRenderer;
@@ -110,13 +114,14 @@ public class Application {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
         
-        window = new Window(WINDOW_WIDTH, WINDOW_HEIGHT, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, WINDOW_TITLE)
-                .createWindow(keyPressEvent);
+        window = new Window().createWindow(keyPressEvent);
         
         // Create GL resources
         shaderProgram = shader.createShaderProgram();
         renderer = shader.createRenderer();
         gameController = new GameControllerImpl(renderer, playerWorm);
+        
+        
         
         int[] mArr = mesh.createBlockMesh(BLOCK_VERTICES, BLOCK_INDICES);
         blockVertexArray = mArr[0];

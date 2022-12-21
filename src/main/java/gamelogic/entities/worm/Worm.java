@@ -14,8 +14,8 @@ public interface Worm {
     void setController(WormController controller);
     Direction getDirection();
     void setDirection(Direction direction);
-    int getVisionDistance();
-    void setVisionDistance(int visionDistance);
+    float getVisionDistance();
+    void setVisionDistance(float visionDistance);
     Vector2f getHead();
     void setHead(Vector2f head);
     List<Vector2f> getTail();

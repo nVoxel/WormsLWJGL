@@ -1,9 +1,13 @@
 package window;
 
+import application.Application;
 import events.keypress.KeyPressEvent;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
+import renderer.Shader;
 import utils.Logger;
 
 import java.nio.IntBuffer;
@@ -15,18 +19,6 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
     private final Logger logger = Logger.getInstance();
-    
-    private int width, height;
-    private int fbWidth, fbHeight;
-    private final String title;
-    
-    public Window(int width, int height, int fbWidth, int fbHeight, String title) {
-        this.width = width;
-        this.height = height;
-        this.fbWidth = fbWidth;
-        this.fbHeight = fbHeight;
-        this.title = title;
-    }
     
     public long createWindow(KeyPressEvent keyPressEvent) {
         long window;
@@ -56,8 +48,12 @@ public class Window {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     
         // Create the window
-        logger.debug(String.format("Creating window: \"%S\" (%dx%d)", title, width, height));
-        window = glfwCreateWindow(width, height, title, NULL, NULL);
+        logger.debug(String.format("Creating window: \"%S\" (%dx%d)", Application.WINDOW_TITLE,
+                Application.WINDOW_WIDTH, Application.WINDOW_HEIGHT
+        ));
+        window = glfwCreateWindow(
+                Application.WINDOW_WIDTH, Application.WINDOW_HEIGHT, Application.WINDOW_TITLE, NULL, NULL
+        );
         if (window == NULL) {
             logger.error("Failed to create GLFW window");
             throw new IllegalStateException("Failed to create GLFW window");
@@ -81,19 +77,43 @@ public class Window {
     
         // Setup window size callback
         glfwSetWindowSizeCallback(window, (cWindow, cWidth, cHeight) -> {
-            if (cWindow == window && cWidth > 0 && cHeight > 0 && (cWidth != width || cHeight != height)) {
-                width = cWidth;
-                height = cHeight;
-                logger.trace(String.format("Window resized: %dx%d", width, height));
+            if (cWindow == window && cWidth > 0 && cHeight > 0
+                    && (cWidth != Application.WINDOW_WIDTH || cHeight != Application.WINDOW_HEIGHT)) {
+                Application.WINDOW_WIDTH = cWidth;
+                Application.WINDOW_HEIGHT = cHeight;
+                logger.trace(String.format("Window resized: %dx%d", Application.WINDOW_WIDTH, Application.WINDOW_HEIGHT));
+    
+                int halfMarginHorizontal = 0;
+                int halfMarginVertical = 0;
+    
+                if (Application.WINDOW_WIDTH > Application.FRAMEBUFFER_WIDTH) {
+                    halfMarginHorizontal = (Application.WINDOW_WIDTH - Application.FRAMEBUFFER_WIDTH) / 2;
+                }
+                if (Application.WINDOW_HEIGHT > Application.FRAMEBUFFER_HEIGHT) {
+                    halfMarginVertical = (Application.WINDOW_HEIGHT - Application.FRAMEBUFFER_HEIGHT) / 2;
+                }
+                
+                GL11.glViewport(halfMarginHorizontal, halfMarginVertical,
+                        cWidth - halfMarginHorizontal * 2, cHeight - halfMarginVertical * 2
+                );
+                
+    
+                //Application.projectionMatrix = new Matrix4f().ortho2D(0, Application.FRAMEBUFFER_WIDTH, Application.FRAMEBUFFER_HEIGHT,0);
+                
+                Application.projectionMatrix = new Matrix4f().ortho2D(0, Application.FRAMEBUFFER_WIDTH, Application.FRAMEBUFFER_HEIGHT,0);
             }
         });
     
         // Setup framebuffer size callback
         glfwSetFramebufferSizeCallback(window, (cWindow, cWidth, cHeight) -> {
-            if (cWindow == window && cWidth > 0 && cHeight > 0 && (cWidth != fbWidth || cHeight != fbHeight)) {
-                fbWidth = width;
-                fbHeight = height;
-                logger.trace(String.format("Framebuffer resized: %dx%d", width, height));
+            if (cWindow == window && cWidth > 0 && cHeight > 0 && (cWidth != Application.FRAMEBUFFER_WIDTH || cHeight != Application.FRAMEBUFFER_HEIGHT)) {
+                Application.FRAMEBUFFER_WIDTH = cHeight * 16 / 9;
+                Application.FRAMEBUFFER_HEIGHT = cHeight;
+    
+                Shader.setProjectionMatrix(cHeight * 16 / 9, cHeight);
+                
+                logger.trace(String.format("Framebuffer resized: %dx%d", Application.FRAMEBUFFER_WIDTH, Application.FRAMEBUFFER_HEIGHT));
+                logger.trace(String.format("Framebuffer resized: %dx%d", cWidth, cHeight));
             }
         });
     
@@ -109,10 +129,10 @@ public class Window {
             );
             // XXX: Allow for Mac?
             glfwGetFramebufferSize(window, pWidth, pHeight);
-            if (fbWidth != pWidth.get(0) || fbHeight != pHeight.get(0)) {
-                fbWidth = pWidth.get(0);
-                fbHeight = pHeight.get(0);
-                logger.trace(String.format("Framebuffer size: %dx%d", fbWidth, fbWidth));
+            if (Application.FRAMEBUFFER_WIDTH != pWidth.get(0) || Application.FRAMEBUFFER_HEIGHT != pHeight.get(0)) {
+                Application.FRAMEBUFFER_WIDTH = pHeight.get(0) * 16 / 9;
+                Application.FRAMEBUFFER_HEIGHT = pHeight.get(0);
+                logger.trace(String.format("Framebuffer size: %dx%d", Application.FRAMEBUFFER_WIDTH, Application.FRAMEBUFFER_HEIGHT));
             }
         }
     

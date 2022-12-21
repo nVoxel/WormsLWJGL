@@ -16,7 +16,7 @@ public class WormImpl implements Worm {
     private Direction direction = Direction.UP;
     private WormController wormController =
             new WormControllerImpl(this, Application.GRID_ROWS, Application.GRID_COLUMNS);
-    private int visionDistance = 20;
+    private float visionDistance = 30;
     private Vector2f head = new Vector2f();
     private List<Vector2f> tail = new ArrayList<>();
     private boolean growing = false;
@@ -54,12 +54,12 @@ public class WormImpl implements Worm {
     }
     
     @Override
-    public int getVisionDistance() {
+    public float getVisionDistance() {
         return visionDistance;
     }
     
     @Override
-    public void setVisionDistance(int visionDistance) {
+    public void setVisionDistance(float visionDistance) {
         this.visionDistance = visionDistance;
     }
     
