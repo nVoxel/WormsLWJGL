@@ -1,6 +1,4 @@
-package gamelogic.network;
-
-import gamelogic.network.impl.ServerImpl;
+package gamelogic.network.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -9,6 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+// Клиент для работы сервера
 public class ServerClient {
     private final int id;
     private final Socket socket;
@@ -19,7 +18,7 @@ public class ServerClient {
 
     private double lastTime;
 
-    public ServerClient(int id, Socket socket, ServerImpl server) {
+    public ServerClient(int id, Socket socket, Server server) {
         maximumFps = 60;
         this.id = id;
         this.socket = socket;

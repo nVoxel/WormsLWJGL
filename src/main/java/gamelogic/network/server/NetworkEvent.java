@@ -1,20 +1,17 @@
-package gamelogic.network;
+package gamelogic.network.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class NetworkEvent {
-
     public int type;
     // Если собиые пришло с сервера - id объекта, к которому применить событие
     // Если собиые отправляется на сервев - id объекта источника события
     public int objectId;
     public double[] data;
 
-    public static int END = 999;
-
-    public NetworkEvent(int type, int objectId, double[] data){
+    public NetworkEvent(int type, int objectId, double[] data) {
         this.type = type;
         this.objectId = objectId;
         this.data = data;
@@ -38,4 +35,6 @@ public class NetworkEvent {
             dataOutputStream.writeDouble(event.data[i]);
         }
     }
+
+    public static int END = 999;
 }

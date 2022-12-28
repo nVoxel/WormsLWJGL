@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 public interface GameController {
     void update(Worm worm);
     void checkWormsCollision(Worm worm, Worm worm2);
-    
+    void playerConnected(int id, double x, double y, boolean currentPlayer);
     // TODO: move to GameRenderer?
     void placeFood();
     void drawBlock(Vector2f position, Vector3f color);

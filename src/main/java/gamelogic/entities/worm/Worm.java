@@ -2,6 +2,7 @@ package gamelogic.entities.worm;
 
 import enums.Direction;
 import gamelogic.controllers.WormController;
+import gamelogic.network.server.NetworkEvent;
 import org.joml.Vector2f;
 
 import java.util.List;

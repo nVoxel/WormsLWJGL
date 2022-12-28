@@ -3,11 +3,18 @@ package gamelogic.controllers.impl;
 import application.Application;
 import gamelogic.controllers.GameController;
 import gamelogic.entities.worm.Worm;
+import gamelogic.entities.worm.impl.WormImpl;
+import gamelogic.network.server.NetworkEvent;
 import org.joml.Random;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import renderer.Renderer;
 import utils.Logger;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
+import java.util.List;
 
 public class GameControllerImpl implements GameController {
     
@@ -21,6 +28,8 @@ public class GameControllerImpl implements GameController {
     
     private final Renderer renderer;
     private final Worm playerWorm;
+
+    private Socket socket;
     
     private Vector2f food; {
         placeFood();
@@ -72,7 +81,10 @@ public class GameControllerImpl implements GameController {
             }
         }
     }
-    
+
+    @Override
+    public void playerConnected(int id, double x, double y, boolean currentPlayer) {}
+
     @Override
     public void placeFood() {
         if (food == null)
@@ -116,4 +128,29 @@ public class GameControllerImpl implements GameController {
     public void drawFood() {
         drawBlock(food, FOOD_COLOR);
     }
+
+
+
+//    public void communicateWithServer() {
+//        Thread thread = new Thread(() -> {
+//            while (true) {
+//                try {
+//                    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+//                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+//                    List<NetworkEvent> events = WormImpl.pollEvents();
+//                    for(NetworkEvent event: events) {
+//                        NetworkEvent.writeEvent(event, dataOutputStream);
+//                    }
+//                    dataOutputStream.writeInt(NetworkEvent.END);
+//                    NetworkEvent event;
+//                    while ((event = NetworkEvent.readEvent(dataInputStream)) != null) {
+//                        WormImpl.processEventFromServer(event);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//        thread.start();
+//    }
 }

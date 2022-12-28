@@ -8,6 +8,8 @@ import gamelogic.entities.worm.Worm;
 import gamelogic.entities.worm.impl.WormImpl;
 import gamelogic.gamerenderer.GameRenderer;
 import gamelogic.gamerenderer.impl.GameRendererImpl;
+import gamelogic.network.client.Client;
+import gamelogic.network.server.Server;
 import org.joml.Matrix4f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
@@ -21,6 +23,8 @@ import renderer.Shader;
 import utils.Logger;
 import window.Window;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +55,9 @@ public class Application {
     private final Logger logger = Logger.getInstance();
     
     private long window;
+
+    private Server server;
+    private Client client;
     
     private final List<Worm> worms = new ArrayList<>(); {
         final Worm worm = new WormImpl();
@@ -61,14 +68,14 @@ public class Application {
             worm.getHead().x = 20;
             worm.getHead().y = 20;
         }
-        
+
         final Worm worm2 = new WormImpl();
         {
             worm.setId(2);
             worm2.getHead().x = (float)(GRID_COLUMNS / 2);
             worm2.getHead().y = (float)(GRID_ROWS / 2 - 2);
         }
-        
+
         worms.add(worm);
         worms.add(worm2);
     }
@@ -78,13 +85,15 @@ public class Application {
     
     private int blockVertexArray, blockVertexArrayBuffer, blockElementArrayBuffer;
     private int shaderProgram;
-    
+
     private Renderer renderer;
     public static Matrix4f projectionMatrix;
     private final Shader shader = new Shader(FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, GRID_COLUMNS, GRID_ROWS, projectionMatrix);
     private final Mesh mesh = new Mesh();
     private GameController gameController;
     private GameRenderer gameRenderer;
+
+
     
     public void run() {
         try {
@@ -100,6 +109,20 @@ public class Application {
     
     private void init() {
         logger.debug("LWJGL " + Version.getVersion());
+
+        if (!worms.isEmpty()) {
+            try {
+                server = new Server();
+            } catch (IOException e) {
+                System.out.printf("SERVER FAILED TO START %s\n", e.getLocalizedMessage());
+            }
+        }
+        try {
+            Socket socket = new Socket("127.0.0.1", 16431);
+            client = new Client(playerWorm, socket);
+        } catch (IOException e) {
+            System.out.printf("CLIENT FAILED TO CONNECT %s\n", e.getLocalizedMessage());
+        }
         
         // Setup error callback
         glfwSetErrorCallback((error, description) -> {
@@ -191,4 +214,5 @@ public class Application {
         Callbacks.glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
     }
+
 }
