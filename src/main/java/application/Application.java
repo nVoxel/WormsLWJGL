@@ -55,16 +55,11 @@ public class Application {
     private final Logger logger = Logger.getInstance();
     
     private long window;
-
-    private Server server;
-    private Client client;
     
-    private final List<Worm> worms = new ArrayList<>(); {
+    public static final List<Worm> worms = new ArrayList<>(); /*{
         final Worm worm = new WormImpl();
         {
             worm.setId(1);
-            //worm.getHead().x = (float)(GRID_COLUMNS / 2);
-            //worm.getHead().y = (float)(GRID_ROWS / 2);
             worm.getHead().x = 20;
             worm.getHead().y = 20;
         }
@@ -78,10 +73,10 @@ public class Application {
 
         worms.add(worm);
         worms.add(worm2);
-    }
+    }*/
     
-    private final Worm playerWorm = worms.get(0);
-    private final KeyPressEvent keyPressEvent = new KeyPressEventImpl(playerWorm.getController());
+    private Worm playerWorm;
+    private KeyPressEvent keyPressEvent;
     
     private int blockVertexArray, blockVertexArrayBuffer, blockElementArrayBuffer;
     private int shaderProgram;
@@ -92,10 +87,25 @@ public class Application {
     private final Mesh mesh = new Mesh();
     private GameController gameController;
     private GameRenderer gameRenderer;
-
-
+    
+    private boolean isHost;
+    private String serverIP;
+    
+    public static Client client;
+    public static Server server;
     
     public void run() {
+        this.isHost = true;
+        runGame();
+    }
+    
+    public void run(String serverIP) {
+        this.isHost = false;
+        this.serverIP = serverIP;
+        runGame();
+    }
+    
+    private void runGame() {
         try {
             init();
             loop();
@@ -109,20 +119,6 @@ public class Application {
     
     private void init() {
         logger.debug("LWJGL " + Version.getVersion());
-
-        if (!worms.isEmpty()) {
-            try {
-                server = new Server();
-            } catch (IOException e) {
-                System.out.printf("SERVER FAILED TO START %s\n", e.getLocalizedMessage());
-            }
-        }
-        try {
-            Socket socket = new Socket("127.0.0.1", 16431);
-            client = new Client(playerWorm, socket);
-        } catch (IOException e) {
-            System.out.printf("CLIENT FAILED TO CONNECT %s\n", e.getLocalizedMessage());
-        }
         
         // Setup error callback
         glfwSetErrorCallback((error, description) -> {
@@ -136,7 +132,16 @@ public class Application {
             logger.error("Unable to initialize GLFW");
             throw new IllegalStateException("Unable to initialize GLFW");
         }
-        
+    
+        playerWorm = new WormImpl();
+        {
+            playerWorm.setId(2);
+            playerWorm.getHead().x = (float)(GRID_COLUMNS / 2);
+            playerWorm.getHead().y = (float)(GRID_ROWS / 2 - 2);
+        }
+    
+        keyPressEvent = new KeyPressEventImpl(playerWorm.getController());
+    
         window = new Window().createWindow(keyPressEvent);
         
         // Create GL resources
@@ -144,14 +149,32 @@ public class Application {
         renderer = shader.createRenderer();
         gameController = new GameControllerImpl(renderer, playerWorm);
         
-        
-        
         int[] mArr = mesh.createBlockMesh(BLOCK_VERTICES, BLOCK_INDICES);
         blockVertexArray = mArr[0];
         blockVertexArrayBuffer = mArr[1];
         blockElementArrayBuffer = mArr[2];
     
         gameRenderer = new GameRendererImpl(shaderProgram, blockVertexArray, gameController, worms);
+        
+        if (isHost) {
+            try {
+                server = new Server();
+            }
+            catch (IOException e) {
+                System.out.println("Failed to start server");
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                client = new Client(playerWorm, new Socket(serverIP, 16431));
+                worms.add(playerWorm);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Failed to connect to server");
+            }
+        }
     }
     
     private void loop() {
@@ -180,7 +203,10 @@ public class Application {
                     gameController.update(worm);
                 }
                 
-                gameController.checkWormsCollision(worms.get(0), worms.get(1)); // TODO remove hardcoded worms
+                if (worms.size() > 1) {
+                    gameController.checkWormsCollision(worms.get(0), worms.get(1)); // TODO remove hardcoded worms
+                }
+                
                 accumulatedDelta -= secondsPerFrame;
             }
             
