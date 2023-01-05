@@ -1,18 +1,44 @@
 package gamelogic.network.server;
 
+import enums.NetworkEventType;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
 public class NetworkEvent {
-    public int type;
+    private NetworkEventType type;
     // Если собиые пришло с сервера - id объекта, к которому применить событие
     // Если собиые отправляется на сервев - id объекта источника события
-    public int objectId;
-    public double[] data;
-
-    public NetworkEvent(int type, int objectId, double[] data) {
+    private int objectId;
+    private double[] data;
+    
+    public NetworkEventType getType() {
+        return type;
+    }
+    
+    public void setType(NetworkEventType type) {
+        this.type = type;
+    }
+    
+    public int getObjectId() {
+        return objectId;
+    }
+    
+    public void setObjectId(int objectId) {
+        this.objectId = objectId;
+    }
+    
+    public double[] getData() {
+        return data;
+    }
+    
+    public void setData(double[] data) {
+        this.data = data;
+    }
+    
+    public NetworkEvent(NetworkEventType type, int objectId, double[] data) {
         this.type = type;
         this.objectId = objectId;
         this.data = data;
@@ -26,7 +52,7 @@ public class NetworkEvent {
         String[] part1 = parts[0].split(" ");
         String[] part2 = parts[1].split(" ");
         
-        this.type = Integer.parseInt(part1[0]);
+        this.type = NetworkEventType.getByValue(Integer.parseInt(part1[0]));
         this.objectId = Integer.parseInt(part1[1]);
         
         this.data = new double[part2.length];
@@ -43,11 +69,11 @@ public class NetworkEvent {
         for(int i = 0; i < 10; i++) {
             buffer[i] = dataInputStream.readDouble();
         }
-        return new NetworkEvent(type, objectId, buffer);
+        return new NetworkEvent(NetworkEventType.getByValue(type), objectId, buffer);
     }
 
     public static void writeEvent(NetworkEvent event, DataOutputStream dataOutputStream) throws IOException {
-        dataOutputStream.writeInt(event.type);
+        dataOutputStream.writeInt(event.type.value);
         dataOutputStream.writeInt(event.objectId);
         for(int i = 0; i < 10; i++) {
             dataOutputStream.writeDouble(event.data[i]);
@@ -56,7 +82,7 @@ public class NetworkEvent {
     
     public String serialize() {
         StringBuilder builder = new StringBuilder();
-        builder.append(type).append(" ").append(objectId).append("@");
+        builder.append(type.value).append(" ").append(objectId).append("@");
         for(double d: data) {
             builder.append(d).append(" ");
         }

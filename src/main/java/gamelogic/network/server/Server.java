@@ -1,13 +1,11 @@
 package gamelogic.network.server;
 
 import application.Application;
-import enums.Direction;
-import enums.NetworkEventType;
 import gamelogic.entities.worm.Worm;
 import gamelogic.entities.worm.impl.WormImpl;
 import gamelogic.network.client.Client;
+import gamelogic.network.dispatchers.NetworkEventDispatcher;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,9 +16,12 @@ import java.util.Scanner;
 
 public class Server {
     private final List<Client> clients;
+    
+    private final NetworkEventDispatcher dispatcher;
 
     public Server() throws IOException {
         clients = new ArrayList<>();
+        dispatcher = new NetworkEventDispatcher();
 
         ServerSocket serverSocket = new ServerSocket(16431);
         System.out.println("Server started");
@@ -68,9 +69,7 @@ public class Server {
                         
                         NetworkEvent event = new NetworkEvent(message);
                         
-                        if (event.type == NetworkEventType.PLAYER_MOVED.value) {
-                            Application.worms.get(0).setDirection(Direction.getByValue((int)Math.round(event.data[0])));
-                        }
+                        dispatcher.dispatch(event);
                     }
                 }
             }

@@ -24,7 +24,7 @@ public class NetworkController {
     // Событие с сервера (обновить состояние объекта)
     public static void processEventFromServer(NetworkEvent event) {
         Optional<Component> optionalComponent = components.stream()
-                .filter(item -> item.id == event.objectId)
+                .filter(item -> item.id == event.getObjectId())
                 .findAny();
         if (optionalComponent.isPresent() == false) {
             return;
@@ -43,8 +43,8 @@ public class NetworkController {
     // Событие, произошедшее со стороны клиента
     public synchronized void addEventToQueue(NetworkEvent event) {
         for(NetworkEvent queueEvent: networkEvents) {
-            if(queueEvent.type == event.type && queueEvent.objectId == event.objectId) {
-                queueEvent.data = event.data;
+            if(queueEvent.getType() == event.getType() && queueEvent.getObjectId() == event.getObjectId()) {
+                queueEvent.setData(event.getData());
                 return;
             }
         }

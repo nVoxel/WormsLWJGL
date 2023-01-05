@@ -32,7 +32,7 @@ public class WormControllerImpl implements WormController {
         logger.trace(String.format("Worm %d: Direction changed - %s", worm.getId(), direction));
         worm.setDirection(direction);
     
-        Application.client.sendMessageToServer(new NetworkEvent(NetworkEventType.PLAYER_MOVED.value, worm.getId(), new double[] {direction.getValue()}));
+        Application.client.sendMessageToServer(new NetworkEvent(NetworkEventType.PLAYER_MOVED, worm.getId(), new double[] {direction.getValue()}));
     }
     
     @Override
