@@ -50,11 +50,13 @@ public class NetworkEvent {
         String[] parts = serialized.split("@");
         
         String[] part1 = parts[0].split(" ");
-        String[] part2 = parts[1].split(" ");
-        
+    
         this.type = NetworkEventType.getByValue(Integer.parseInt(part1[0]));
         this.objectId = Integer.parseInt(part1[1]);
         
+        if (parts.length == 1) return;
+    
+        String[] part2 = parts[1].split(" ");
         this.data = new double[part2.length];
         for(int i = 0; i < part2.length; i++) {
             this.data[i] = Double.parseDouble(part2[i]);

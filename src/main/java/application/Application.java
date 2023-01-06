@@ -3,12 +3,15 @@ package application;
 import events.keypress.KeyPressEvent;
 import events.keypress.impl.KeyPressEventImpl;
 import gamelogic.controllers.GameController;
+import gamelogic.controllers.NetworkController;
 import gamelogic.controllers.impl.GameControllerImpl;
+import gamelogic.controllers.impl.NetworkControllerImpl;
 import gamelogic.entities.worm.Worm;
 import gamelogic.entities.worm.impl.WormImpl;
 import gamelogic.gamerenderer.GameRenderer;
 import gamelogic.gamerenderer.impl.GameRendererImpl;
 import gamelogic.network.client.Client;
+import gamelogic.network.factories.NetworkEventFactory;
 import gamelogic.network.server.Server;
 import org.joml.Matrix4f;
 import org.lwjgl.Version;
@@ -75,17 +78,21 @@ public class Application {
         worms.add(worm2);
     }*/
     
-    private Worm playerWorm;
+    public static Worm playerWorm;
     private KeyPressEvent keyPressEvent;
     
     private int blockVertexArray, blockVertexArrayBuffer, blockElementArrayBuffer;
     private int shaderProgram;
-
+    
     private Renderer renderer;
     public static Matrix4f projectionMatrix;
     private final Shader shader = new Shader(FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, GRID_COLUMNS, GRID_ROWS, projectionMatrix);
     private final Mesh mesh = new Mesh();
-    private GameController gameController;
+    
+    public static NetworkController networkController;
+    public static NetworkEventFactory networkEventFactory;
+    
+    public static GameController gameController;
     private GameRenderer gameRenderer;
     
     private boolean isHost;
@@ -132,20 +139,43 @@ public class Application {
             logger.error("Unable to initialize GLFW");
             throw new IllegalStateException("Unable to initialize GLFW");
         }
-    
+        
         playerWorm = new WormImpl();
         {
-            playerWorm.setId(2);
-            playerWorm.getHead().x = (float)(GRID_COLUMNS / 2);
-            playerWorm.getHead().y = (float)(GRID_ROWS / 2 - 2);
+            playerWorm.setId(0);
+            playerWorm.getHead().x = (float) (GRID_COLUMNS / 2);
+            playerWorm.getHead().y = (float) (GRID_ROWS / 2 - 2);
         }
-    
+        
         keyPressEvent = new KeyPressEventImpl(playerWorm.getController());
-    
+        
         window = new Window().createWindow(keyPressEvent);
         
         // Create GL resources
         shaderProgram = shader.createShaderProgram();
+        
+        if (isHost) {
+            try {
+                server = new Server();
+                networkController = new NetworkControllerImpl(server);
+            } catch (IOException e) {
+                System.out.println("Failed to start server");
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                client = new Client(playerWorm, new Socket(serverIP, 16431));
+                client.createServerListeningThread();
+                networkController = new NetworkControllerImpl(client);
+                worms.add(playerWorm);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Failed to connect to server");
+            }
+        }
+        
+        networkEventFactory = new NetworkEventFactory();
+        
         renderer = shader.createRenderer();
         gameController = new GameControllerImpl(renderer, playerWorm);
         
@@ -153,28 +183,8 @@ public class Application {
         blockVertexArray = mArr[0];
         blockVertexArrayBuffer = mArr[1];
         blockElementArrayBuffer = mArr[2];
-    
-        gameRenderer = new GameRendererImpl(shaderProgram, blockVertexArray, gameController, worms);
         
-        if (isHost) {
-            try {
-                server = new Server();
-            }
-            catch (IOException e) {
-                System.out.println("Failed to start server");
-                e.printStackTrace();
-            }
-        }
-        else {
-            try {
-                client = new Client(playerWorm, new Socket(serverIP, 16431));
-                worms.add(playerWorm);
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException("Failed to connect to server");
-            }
-        }
+        gameRenderer = new GameRendererImpl(shaderProgram, blockVertexArray, gameController, worms);
     }
     
     private void loop() {
@@ -240,5 +250,5 @@ public class Application {
         Callbacks.glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
     }
-
+    
 }

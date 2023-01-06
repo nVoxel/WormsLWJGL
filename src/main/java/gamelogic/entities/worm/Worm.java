@@ -27,4 +27,5 @@ public interface Worm {
     void setAlive(boolean alive);
     float getVelocity();
     void setVelocity(float velocity);
+    double[] serialize();
 }

@@ -3,6 +3,7 @@ package gamelogic.entities.worm.impl;
 import application.Application;
 import enums.Direction;
 import gamelogic.Component;
+import gamelogic.controllers.NetworkController;
 import gamelogic.controllers.WormController;
 import gamelogic.controllers.impl.WormControllerImpl;
 import gamelogic.entities.worm.Worm;
@@ -16,21 +17,43 @@ import java.util.Optional;
 
 public class WormImpl implements Worm {
 
-    private int id = 0;
-    private Direction direction = Direction.UP;
-    private WormController wormController =
-            new WormControllerImpl(this, Application.GRID_ROWS, Application.GRID_COLUMNS);
-    private float visionDistance = 30;
-    private Vector2f head = new Vector2f();
-    private List<Vector2f> tail = new ArrayList<>();
-    private boolean growing = false;
-    private boolean alive = true;
-    private float velocity = 0.1f;
-
-    private boolean firstPlayerConnection = true;
-
-
-
+    private int id;
+    private Direction direction;
+    private WormController wormController;
+    private float visionDistance;
+    private Vector2f head;
+    private List<Vector2f> tail;
+    private boolean growing;
+    private boolean alive;
+    private float velocity;
+    
+    public WormImpl() {
+        id = 0;
+        direction = Direction.UP;
+        wormController = new WormControllerImpl(this, Application.GRID_ROWS, Application.GRID_COLUMNS);
+        visionDistance = 30;
+        head = new Vector2f();
+        tail = new ArrayList<>();
+        growing = false;
+        alive = true;
+        velocity = 0.1f;
+    }
+    
+    public WormImpl(double[] data) {
+        id = (int) data[0];
+        direction = Direction.getByValue((int) data[1]);
+        wormController = new WormControllerImpl(this, Application.GRID_ROWS, Application.GRID_COLUMNS);
+        visionDistance = (float) data[2];
+        head = new Vector2f((float) data[3], (float) data[4]);
+        growing = data[5] == 1;
+        alive = data[6] == 1;
+        velocity = (float) data[7];
+        tail = new ArrayList<>();
+        for (int i = 0; i < (data.length - 8) / 2; i++) {
+            tail.add(new Vector2f((float) data[8 + i * 2], (float) data[8 + i * 2 + 1]));
+        }
+    }
+    
     @Override
     public int getId() {
         return id;
@@ -120,6 +143,24 @@ public class WormImpl implements Worm {
     public void setVelocity(float velocity) {
         this.velocity = velocity;
     }
-
-
+    
+    @Override
+    public double[] serialize() {
+        double[] data = new double[8 + tail.size() * 2];
+        
+        data[0] = id;
+        data[1] = direction.getValue();
+        data[2] = visionDistance;
+        data[3] = head.x;
+        data[4] = head.y;
+        data[5] = growing ? 1 : 0;
+        data[6] = alive ? 1 : 0;
+        data[7] = velocity;
+        for (int i = 0; i < tail.size(); i++) {
+            data[8 + i * 2] = tail.get(i).x;
+            data[8 + i * 2 + 1] = tail.get(i).y;
+        }
+        
+        return data;
+    }
 }

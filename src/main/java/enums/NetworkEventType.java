@@ -2,12 +2,13 @@ package enums;
 
 public enum NetworkEventType {
     
-    PLAYER_CONNECTED(1),
-    PLAYER_DISCONNECTED(2),
-    PLAYER_MOVED(3),
-    FOOD_SPAWNED(4),
-    FOOD_EATEN(5),
-    PLAYER_DIED(6);
+    PLAYER_CONNECTED_INIT(1),
+    PLAYER_CONNECTED(2),
+    PLAYER_DISCONNECTED(3),
+    PLAYER_MOVED(4),
+    FOOD_SPAWNED(5),
+    FOOD_EATEN(6),
+    PLAYER_DIED(7);
     
     
 
